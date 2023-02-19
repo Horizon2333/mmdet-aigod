@@ -13,7 +13,7 @@ Required environments:
 
 Install:
 
-Note that this repository is based on the [MMDetection] (https://github.com/open-mmlab/mmdetection). Assume that your environment has satisfied the above requirements, please follow the following steps for installation.
+Note that this repository is based on the [MMDetection](https://github.com/open-mmlab/mmdetection). Assume that your environment has satisfied the above requirements, please follow the following steps for installation.
 
 ```shell script
 git clone https://github.com/Horizon2333/mmdet-aigod
