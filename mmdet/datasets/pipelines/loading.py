@@ -2,7 +2,7 @@ import os.path as osp
 
 import mmcv
 import numpy as np
-import aitodpycocotools.mask as maskUtils
+import aigodpycocotools.mask as maskUtils
 
 from mmdet.core import BitmapMasks, PolygonMasks
 from ..builder import PIPELINES

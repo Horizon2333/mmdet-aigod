@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 import numpy as np
 from mmcv.utils import print_log
-from aitodpycocotools.cocoeval import COCOeval
+from aigodpycocotools.cocoeval import COCOeval
 from terminaltables import AsciiTable
 
 from .builder import DATASETS

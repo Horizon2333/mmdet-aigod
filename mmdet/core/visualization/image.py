@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import mmcv
 import numpy as np
-import aitodpycocotools.mask as mask_util
+import aigodpycocotools.mask as mask_util
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 

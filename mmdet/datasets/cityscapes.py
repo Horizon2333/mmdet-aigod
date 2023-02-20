@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import mmcv
 import numpy as np
-import aitodpycocotools.mask as maskUtils
+import aigodpycocotools.mask as maskUtils
 from mmcv.utils import print_log
 
 from .builder import DATASETS

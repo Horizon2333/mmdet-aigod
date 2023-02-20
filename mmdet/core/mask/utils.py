@@ -1,6 +1,6 @@
 import mmcv
 import numpy as np
-import aitodpycocotools.mask as mask_util
+import aigodpycocotools.mask as mask_util
 
 
 def split_combined_polys(polys, poly_lens, polys_per_mask):

@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 import cv2
 import mmcv
 import numpy as np
-import aitodpycocotools.mask as maskUtils
+import aigodpycocotools.mask as maskUtils
 import torch
 from mmcv.ops.roi_align import roi_align
 

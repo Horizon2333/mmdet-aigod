@@ -17,8 +17,8 @@ from .custom import CustomDataset
 @DATASETS.register_module()
 class AITODDataset(CocoDataset):
 
-    # CLASSES = ('airplane', 'bridge', 'storage-tank', 'ship', 'swimming-pool', 'vehicle', 'person', 'wind-mill')
-    CLASSES = ('airplane', 'ship', 'vehicle', 'person')
+    CLASSES = ('airplane', 'bridge', 'storage-tank', 'ship', 'swimming-pool', 'vehicle', 'person', 'wind-mill')
+    # CLASSES = ('airplane', 'ship', 'vehicle', 'person')
     # CLASSES = ('target', )
 
     def evaluate(self,
@@ -28,7 +28,7 @@ class AITODDataset(CocoDataset):
                  jsonfile_prefix=None,
                  classwise=True,
                  classwise_lrp=True,
-                 proposal_nums=(100, 300, 1500),
+                 proposal_nums=(100, 300, 500),
                  iou_thrs=None,
                  metric_items=None,
                  with_lrp=False):
@@ -63,7 +63,6 @@ class AITODDataset(CocoDataset):
             dict[str, float]: COCO style evaluation metric.
         """
 
-        import pdb; pdb.set_trace()
         metrics = metric if isinstance(metric, list) else [metric]
         allowed_metrics = ['bbox', 'segm', 'proposal', 'proposal_fast']
         for metric in metrics:
@@ -118,24 +117,22 @@ class AITODDataset(CocoDataset):
             coco_metric_names = {
                 'mAP@100': 0,
                 'mAP@300': 1,
-                'mAP@1500': 2,
-                'mAP_25': 3,
-                'mAP_50': 4,
-                'mAP_75': 5,
-                'mAP_vt': 6,
-                'mAP_t': 7,
-                'mAP_s': 8,
-                'mAP_m': 9,
-                'AR@100': 10,
-                'AR@300': 11,
-                'AR@1500': 12,
-                'AR_25': 13,
-                'AR_50': 14,
-                'AR_75': 15,
-                'AR_vt': 16,
-                'AR_t': 17,
-                'AR_s': 18,
-                'AR_m': 19,
+                'mAP@500': 2,
+                'mAP_50': 3,
+                'mAP_75': 4,
+                'mAP_vt': 5,
+                'mAP_t': 6,
+                'mAP_s': 7,
+                'mAP_m': 8,
+                'AR@100': 9,
+                'AR@300': 10,
+                'AR@500': 11,
+                'AR_50': 12,
+                'AR_75': 13,
+                'AR_vt': 14,
+                'AR_t': 15,
+                'AR_s': 16,
+                'AR_m': 17,
             }
             if metric_items is not None:
                 for metric_item in metric_items:
@@ -198,14 +195,14 @@ class AITODDataset(CocoDataset):
 
                     # Compute per-category AR
                     recalls = cocoEval.eval['recall']
-                    assert len(self.cat_ids) == recalls.shape[2]
+                    assert len(self.cat_ids) == recalls.shape[1]
 
                     results_per_category = []
                     for idx, catId in enumerate(self.cat_ids):
                         # area range index 0: all area ranges
                         # max dets index -1: typically 100 per image
                         nm = self.coco.loadCats(catId)[0]
-                        recall = recalls[:, :, idx, 0, -1]
+                        recall = recalls[:, idx, 0, -1]
                         recall = recall[recall > -1]
                         if recall.size:
                             ar = np.mean(recall)
@@ -227,7 +224,7 @@ class AITODDataset(CocoDataset):
                     table = AsciiTable(table_data)
                     print_log('\n' + table.table, logger=logger)
                 
-                if classwise_lrp:  
+                if with_lrp and classwise_lrp:  
                     # Compute per-category oLRP
                     oLRPs = cocoEval.eval['olrp']
                     # precision: (iou, recall, cls, area range, max dets)

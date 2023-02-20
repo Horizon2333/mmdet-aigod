@@ -2,9 +2,9 @@
 
 import warnings
 
-import aitodpycocotools
-from aitodpycocotools.coco import COCO as _COCO
-from aitodpycocotools.cocoeval import COCOeval as _COCOeval
+import aigodpycocotools
+from aigodpycocotools.coco import COCO as _COCO
+from aigodpycocotools.cocoeval import COCOeval as _COCOeval
 
 
 class COCO(_COCO):
@@ -15,7 +15,7 @@ class COCO(_COCO):
     """
 
     def __init__(self, annotation_file=None):
-        if getattr(aitodpycocotools, '__version__', '0') >= '12.0.2':
+        if getattr(aigodpycocotools, '__version__', '0') >= '12.0.2':
             warnings.warn(
                 'mmpycocotools is deprecated. Please install official pycocotools by "pip install pycocotools"',  # noqa: E501
                 UserWarning)
