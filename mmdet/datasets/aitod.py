@@ -120,19 +120,19 @@ class AITODDataset(CocoDataset):
                 'mAP@500': 2,
                 'mAP_50': 3,
                 'mAP_75': 4,
-                'mAP_vt': 5,
-                'mAP_t': 6,
-                'mAP_s': 7,
-                'mAP_m': 8,
+                'mAP_dim': 5,
+                'mAP_tiny': 6,
+                'mAP_small': 7,
+                'mAP_medium': 8,
                 'AR@100': 9,
                 'AR@300': 10,
                 'AR@500': 11,
                 'AR_50': 12,
                 'AR_75': 13,
-                'AR_vt': 14,
-                'AR_t': 15,
-                'AR_s': 16,
-                'AR_m': 17,
+                'AR_dim': 14,
+                'AR_tiny': 15,
+                'AR_small': 16,
+                'AR_medium': 17,
             }
             if metric_items is not None:
                 for metric_item in metric_items:
@@ -259,7 +259,8 @@ class AITODDataset(CocoDataset):
 
                 if metric_items is None:
                     metric_items = [
-                        'mAP', 'mAP_50', 'mAP_75', 'mAP_vt', 'mAP_t', 'mAP_s', 'mAP_m', 'oLRP', 'oLRP_Localisation', 'oLRP_false_positive', 'oLRP_false_negative'
+                        'mAP@100', 'mAP@300', 'mAP@500', 'mAP_50', 'mAP_75', 'mAP_dim', 'mAP_tiny', 'mAP_small', 'mAP_medium',
+                        'AR@100', 'AR@300', 'AR@500', 'AR_50', 'AR_75', 'AR_dim', 'AR_tiny', 'AR_small', 'AR_medium',
                     ]
 
                 for metric_item in metric_items:
@@ -268,10 +269,14 @@ class AITODDataset(CocoDataset):
                         f'{cocoEval.stats[coco_metric_names[metric_item]]:.3f}'
                     )
                     eval_results[key] = val
-                ap = cocoEval.stats[:6]
+                ap = cocoEval.stats[:9]
                 eval_results[f'{metric}_mAP_copypaste'] = (
-                    f'{ap[0]:.3f} {ap[1]:.3f} {ap[2]:.3f} {ap[3]:.3f} '
-                    f'{ap[4]:.3f} {ap[5]:.3f}')
+                    f'{ap[0]:.3f} {ap[1]:.3f} {ap[2]:.3f} {ap[3]:.3f} {ap[4]:.3f}'
+                    f'{ap[5]:.3f} {ap[6]:.3f} {ap[7]:.3f} {ap[8]:.3f}')
+                ar = cocoEval.stats[9:]
+                eval_results[f'{metric}_AR_copypaste'] = (
+                    f'{ar[0]:.3f} {ar[1]:.3f} {ar[2]:.3f} {ar[3]:.3f} {ar[4]:.3f}'
+                    f'{ar[5]:.3f} {ar[6]:.3f} {ar[7]:.3f} {ar[8]:.3f}')
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return eval_results
