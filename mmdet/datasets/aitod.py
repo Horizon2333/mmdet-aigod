@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 import numpy as np
 from mmcv.utils import print_log
-from aitodpycocotools.cocoeval import COCOeval
+from aigodpycocotools.cocoeval import COCOeval
 from terminaltables import AsciiTable
 
 from .builder import DATASETS
@@ -116,26 +116,26 @@ class AITODDataset(CocoDataset):
             cocoEval.params.iouThrs = iou_thrs
             # mapping of cocoEval.stats
             coco_metric_names = {
-                'mAP': 0,
-                'mAP_25': 1,
-                'mAP_50': 2,
-                'mAP_75': 3,
-                'mAP_vt': 4,
-                'mAP_t': 5,
-                'mAP_s': 6,
-                'mAP_m': 7,
-                'AR@100': 8,
-                'AR@300': 9,
-                'AR@1500': 10,
-                'AR_vt@1500': 11,
-                'AR_t@1500': 12,
-                'AR_s@1500': 13,
-                'AR_m@1500': 14,
-                'oLRP': 15,
-                'oLRP_Localisation': 16,
-                'oLRP_false_positive': 17,
-                'oLRP_false_negative': 18
-
+                'mAP@100': 0,
+                'mAP@300': 1,
+                'mAP@1500': 2,
+                'mAP_25': 3,
+                'mAP_50': 4,
+                'mAP_75': 5,
+                'mAP_vt': 6,
+                'mAP_t': 7,
+                'mAP_s': 8,
+                'mAP_m': 9,
+                'AR@100': 10,
+                'AR@300': 11,
+                'AR@1500': 12,
+                'AR_25': 13,
+                'AR_50': 14,
+                'AR_75': 15,
+                'AR_vt': 16,
+                'AR_t': 17,
+                'AR_s': 18,
+                'AR_m': 19,
             }
             if metric_items is not None:
                 for metric_item in metric_items:
@@ -162,7 +162,7 @@ class AITODDataset(CocoDataset):
                 cocoEval.evaluate()
                 cocoEval.accumulate(with_lrp=with_lrp)
                 cocoEval.summarize()
-                if classwise:  # Compute per-category AP
+                if classwise:
                     # Compute per-category AP
                     # from https://github.com/facebookresearch/detectron2/
                     precisions = cocoEval.eval['precision']
@@ -195,10 +195,40 @@ class AITODDataset(CocoDataset):
                     table_data += [result for result in results_2d]
                     table = AsciiTable(table_data)
                     print_log('\n' + table.table, logger=logger)
+
+                    # Compute per-category AR
+                    recalls = cocoEval.eval['recall']
+                    assert len(self.cat_ids) == recalls.shape[2]
+
+                    results_per_category = []
+                    for idx, catId in enumerate(self.cat_ids):
+                        # area range index 0: all area ranges
+                        # max dets index -1: typically 100 per image
+                        nm = self.coco.loadCats(catId)[0]
+                        recall = recalls[:, :, idx, 0, -1]
+                        recall = recall[recall > -1]
+                        if recall.size:
+                            ar = np.mean(recall)
+                        else:
+                            ar = float('nan')
+                        results_per_category.append(
+                            (f'{nm["name"]}', f'{float(ar):0.3f}'))
+
+                    num_columns = min(6, len(results_per_category) * 2)
+                    results_flatten = list(
+                        itertools.chain(*results_per_category))
+                    headers = ['category', 'AR'] * (num_columns // 2)
+                    results_2d = itertools.zip_longest(*[
+                        results_flatten[i::num_columns]
+                        for i in range(num_columns)
+                    ])
+                    table_data = [headers]
+                    table_data += [result for result in results_2d]
+                    table = AsciiTable(table_data)
+                    print_log('\n' + table.table, logger=logger)
                 
-                if classwise_lrp:  # Compute per-category AP
-                    # Compute per-category AP
-                    # from https://github.com/facebookresearch/detectron2/
+                if classwise_lrp:  
+                    # Compute per-category oLRP
                     oLRPs = cocoEval.eval['olrp']
                     # precision: (iou, recall, cls, area range, max dets)
                     assert len(self.cat_ids) == oLRPs.shape[0]
