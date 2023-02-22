@@ -114,7 +114,7 @@ model = dict(
         # e.g., nms=dict(type='soft_nms', iou_threshold=0.5, min_score=0.05)
     ))
 
-#fp16 = dict(loss_scale=512.)
+# fp16 = dict(loss_scale=512.)
 
 optimizer = dict(type='SGD', lr=0.02/4, momentum=0.9, weight_decay=0.0001)
 # learning policy

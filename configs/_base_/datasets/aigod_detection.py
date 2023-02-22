@@ -29,20 +29,20 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=4,
+    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/filter/aitod_trainval_v1_1.0.json',
+        ann_file=data_root + 'annotations/one/aitod_trainval_v1_1.0.json',
         img_prefix=data_root + 'images/trainval/',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/filter/aitod_test_v1_1.0.json',
+        ann_file=data_root + 'annotations/one/aitod_test_v1_1.0.json',
         img_prefix=data_root + 'images/test/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/filter/aitod_test_v1_1.0.json',
+        ann_file=data_root + 'annotations/one/aitod_test_v1_1.0.json',
         img_prefix=data_root + 'images/test/',
         pipeline=test_pipeline))
 evaluation = dict(interval=12, metric='bbox')

@@ -199,6 +199,7 @@ def main():
 
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
+        import pdb; pdb.set_trace()
         outputs = single_gpu_test(model, data_loader, args.show, args.show_dir,
                                   args.show_score_thr)
     else:
