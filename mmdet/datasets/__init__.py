@@ -13,6 +13,7 @@ from .voc import VOCDataset
 from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
 from .aitod import AITODDataset
+from .aigod import AIGODDataset
 from .dota import DOTA2Dataset
 from .coco_tinyeval import CocoDatasettinyeval
 from .visdrone import VisDroneDataset
@@ -24,5 +25,5 @@ __all__ = [
     'DistributedSampler', 'build_dataloader', 'ConcatDataset', 'RepeatDataset',
     'ClassBalancedDataset', 'WIDERFaceDataset', 'DATASETS', 'PIPELINES',
     'build_dataset', 'replace_ImageToTensor', 'get_loading_pipeline',
-    'NumClassCheckHook','AITODDataset','DOTA2Dataset','CocoDatasettinyeval','VisDroneDataset'
+    'NumClassCheckHook','AITODDataset','AIGODDataset','DOTA2Dataset','CocoDatasettinyeval','VisDroneDataset'
 ]
