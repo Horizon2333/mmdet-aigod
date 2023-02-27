@@ -92,6 +92,7 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
             offset_preds (List[Tensor]): offset predicts for all levels, the
                channels number is 2.
         """
+        import pdb; pdb.set_trace()
         return multi_apply(self.forward_single, feats)
 
     def forward_single(self, feat):

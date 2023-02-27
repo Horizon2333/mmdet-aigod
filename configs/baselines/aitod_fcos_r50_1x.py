@@ -110,3 +110,24 @@ lr_config = dict(
     warmup_ratio=1.0 / 3,
     step=[8, 11])
 runner = dict(type='EpochBasedRunner', max_epochs=12)
+evaluation = dict(interval=1, metric='bbox')
+dataset_type = 'AITODDataset'
+data_root = '/DATA/DATANAS1/hrz/dataset/AI-TOD/'
+data = dict(
+    samples_per_gpu=16,
+    workers_per_gpu=4,
+    train=dict(
+        type=dataset_type,
+        ann_file=data_root + 'annotations/ori/aitod_train.json',
+        img_prefix=data_root + 'images/train/',
+        pipeline=train_pipeline),
+    val=dict(
+        type=dataset_type,
+        ann_file=data_root + 'annotations/ori/aitod_val.json',
+        img_prefix=data_root + 'images/val/',
+        pipeline=test_pipeline),
+    test=dict(
+        type=dataset_type,
+        ann_file=data_root + 'annotations/ori/aitod_val.0.json',
+        img_prefix=data_root + 'images/val/',
+        pipeline=test_pipeline))

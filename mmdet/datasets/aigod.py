@@ -3,6 +3,8 @@ from .coco import CocoDataset
 
 import itertools
 import logging
+import random
+import math
 from collections import OrderedDict
 
 import numpy as np
@@ -29,6 +31,8 @@ class AIGODDataset(CocoDataset):
                  proposal_nums=(100, 300, 500),
                  iou_thrs=None,
                  metric_items=None,
+                 apply_meanshift=False,
+                 bandWidth=0.2,
                  with_lrp=False):
         """Evaluation in COCO protocol.
 
@@ -73,7 +77,12 @@ class AIGODDataset(CocoDataset):
             if not isinstance(metric_items, list):
                 metric_items = [metric_items]
 
-        result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
+        if apply_meanshift:
+            cluster_results = self.transfer_cluster(results, bandWidth)
+        else:
+            cluster_results = results
+
+        result_files, tmp_dir = self.format_results(cluster_results, jsonfile_prefix)
 
         eval_results = OrderedDict()
         cocoGt = self.coco
@@ -278,3 +287,141 @@ class AIGODDataset(CocoDataset):
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return eval_results
+
+    def transfer_cluster(self, results, bandWidth):
+
+        cluster_results = []
+        for idx in range(len(results)):
+            info = self.data_infos[idx]
+            result = results[idx]
+            cluster_result = []
+            for label in range(len(result)):
+                bboxes = result[label]
+
+                if len(bboxes) == 0:
+                    cluster_result.append(bboxes)
+                    continue
+
+                dataPts = (bboxes[:, :2] + bboxes[:, 2:4]) / 2
+
+                width, height = info['width'], info['height']
+                dataPts = dataPts / np.array([width, height])
+                dataPts = dataPts.T
+
+                clustCent, data2cluster = self.MeanShiftCluster(dataPts, bandWidth, plotFlag=False)
+
+                if len(clustCent) == 0:
+                    cluster_result.append(bboxes)
+                    continue
+
+                # get box of cluster
+                cluster_num = clustCent.shape[1]
+                gt_num_in_cluster = []
+                for i in range(cluster_num):
+                    gt_num = np.sum(data2cluster == i)
+                    gt_num_in_cluster.append(gt_num)
+                socred_ind = np.argsort(gt_num_in_cluster)[::-1]
+                cluster_id_list = socred_ind
+
+                cluster_box_list = []
+                for i, clus_ind in enumerate(cluster_id_list[:cluster_num]):
+                    
+                    object_gts = bboxes[data2cluster == clus_ind]
+                    if len(object_gts) == 0:
+                        continue
+
+                    # fuse object box to generate cluster box
+                    x1 = object_gts[:, 0]
+                    y1 = object_gts[:, 1]
+                    x2 = object_gts[:, 2]
+                    y2 = object_gts[:, 3]
+                    s = object_gts[:, 4]
+                    
+                    x1 = np.min(x1)
+                    y1 = np.min(y1)
+                    x2 = np.max(x2)
+                    y2 = np.max(y2)
+                    s = np.mean(s)
+
+                    cluster_box = [x1, y1, x2, y2, s]
+                    cluster_box_list.append(cluster_box)
+                
+                cluster_box_list = np.array(cluster_box_list)
+                cluster_result.append(cluster_box_list)
+            cluster_results.append(cluster_result)
+        
+        return cluster_results
+    
+    def MeanShiftCluster(self, dataPts, bandWidth, plotFlag=False):
+    
+        # **** Initialize stuff ***
+        numDim, numPts  = dataPts.shape
+        numClust        = 0
+        bandSq          = bandWidth**2
+        initPtInds      = [ind for ind in range(numPts)]
+        maxPos          = np.max(dataPts, axis=1)                           # biggest size in each dimension
+        minPos          = np.min(dataPts, axis=1)                           # smallest size in each dimension
+        boundBox        = maxPos - minPos;                                  # bounding box size
+        stopThresh      = 1e-3*bandWidth                                    # when mean has converged
+        clustCent       = []                                                # center of clust
+        beenVisitedFlag = np.zeros((1,numPts), dtype=np.uint8)              # track if a points been seen already
+        numInitPts      = numPts                                            # number of points to posibaly use as initilization points
+        clusterVotes    = np.zeros((1,numPts), dtype=np.uint16)             # used to resolve conflicts on cluster membership
+        
+        while numInitPts:
+
+            tempInd          = math.ceil((numInitPts - 1 - 1e-6) * random.random())        # pick a random seed point
+            stInd            = initPtInds[tempInd]                                         # use this point as start of mean
+            myMean           = np.expand_dims(dataPts[:, stInd], axis=1)                   # intilize mean to this points location
+            myMembers        = []                                                          # points that will get added to this cluster                          
+            thisClusterVotes = np.zeros((1,numPts), dtype=np.uint16)                       # used to resolve conflicts on cluster membership
+
+            while True:
+
+                sqDistToAll = np.sum((np.repeat(myMean, numPts, axis=1) - dataPts) ** 2, axis=0)    # dist squared from mean to all points still active
+                inInds      = np.where(sqDistToAll < bandSq)                                        # points within bandWidth
+                thisClusterVotes[:, inInds] = thisClusterVotes[:, inInds] + 1                       # add a vote for all the in points belonging to this cluster
+                
+                myOldMean = myMean;                                            # save the old mean
+                myMean    = np.mean(dataPts[:, inInds], axis=2)                # compute the new mean
+                myMembers = myMembers + inInds[0].tolist()                     # add any point within bandWidth to the cluster
+                beenVisitedFlag[:, myMembers] = 1                              # mark that these points have been visited
+            
+                if plotFlag:
+                    raise NotImplementedError("Have not implemented plot function")
+
+                # **** if mean doesn't move much stop this cluster ***
+                if np.linalg.norm(myMean - myOldMean) < stopThresh:
+
+                    # check for merge posibilities
+                    mergeWith = 0
+                    for cN in range(numClust):
+                        distToOther = np.linalg.norm(myMean - np.expand_dims(clustCent[:, cN], axis=1))     # distance from posible new clust max to old clust max
+                        if distToOther < bandWidth / 2:                                                     # if its within bandwidth/2 merge new and old
+                            mergeWith = cN
+                            break
+
+                    if mergeWith > 0:    # something to merge
+                        clustCent[:, mergeWith]    = 0.5 * (myMean[:, 0] + clustCent[:, cN])           # record the max as the mean of the two merged (I know biased twoards new ones)
+                        clusterVotes[mergeWith, :] = clusterVotes[mergeWith, :] + thisClusterVotes     # add these votes to the merged cluster
+                    else:    #its a new cluster
+                        numClust = numClust + 1                   # increment clusters
+                        if len(clustCent) == 0:                   # record the mean  
+                            clustCent = myMean
+                        else:
+                            clustCent = np.concatenate([clustCent, myMean], axis=1)    
+
+                        if numClust == 1:             
+                            clusterVotes[numClust - 1, :] = thisClusterVotes
+                        else:
+                            clusterVotes = np.concatenate([clusterVotes, thisClusterVotes], axis=0)
+                    
+                    break
+
+            _, initPtInds = np.where(beenVisitedFlag == 0)         # we can initialize with any of the points not yet visited
+            numInitPts    = len(initPtInds)                        # number of active points in set        
+        
+        val          = np.max(clusterVotes, axis=0)
+        data2cluster = np.argmax(clusterVotes, axis=0)             # a point belongs to the cluster with the most votes
+            
+        return clustCent, data2cluster
