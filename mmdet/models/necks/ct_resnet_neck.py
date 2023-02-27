@@ -88,7 +88,6 @@ class CTResNetNeck(BaseModule):
 
     @auto_fp16()
     def forward(self, inputs):
-        import pdb; pdb.set_trace()
         assert isinstance(inputs, (list, tuple))
         outs = self.deconv_layers(inputs[-1])
         return outs,
