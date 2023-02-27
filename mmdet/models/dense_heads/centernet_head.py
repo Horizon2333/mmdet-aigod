@@ -92,7 +92,8 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
             offset_preds (List[Tensor]): offset predicts for all levels, the
                channels number is 2.
         """
-        return multi_apply(self.forward_single, feats)
+        # return multi_apply(self.forward_single, feats)
+        return multi_apply(self.forward_single, (feats[0], ))
 
     def forward_single(self, feat):
         """Forward feature of a single level.
@@ -143,7 +144,6 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
                 - loss_wh (Tensor): loss of hw heatmap
                 - loss_offset (Tensor): loss of offset heatmap.
         """
-        import pdb; pdb.set_trace()
         assert len(center_heatmap_preds) == len(wh_preds) == len(
             offset_preds) == 1
         center_heatmap_pred = center_heatmap_preds[0]

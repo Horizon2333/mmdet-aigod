@@ -131,7 +131,6 @@ class L1Loss(nn.Module):
                 override the original reduction method of the loss.
                 Defaults to None.
         """
-        import pdb; pdb.set_trace()
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
             reduction_override if reduction_override else self.reduction)
