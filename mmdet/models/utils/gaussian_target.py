@@ -63,6 +63,65 @@ def gen_gaussian_target(heatmap, center, radius, k=1):
 
     return out_heatmap
 
+# def gaussian2D(scale, sigma=1, dtype=torch.float32, device='cpu'):
+#     """Generate 2D gaussian kernel.
+
+#     Args:
+#         radius (int): Radius of gaussian kernel.
+#         sigma (int): Sigma of gaussian function. Default: 1.
+#         dtype (torch.dtype): Dtype of gaussian tensor. Default: torch.float32.
+#         device (str): Device of gaussian tensor. Default: 'cpu'.
+
+#     Returns:
+#         h (Tensor): Gaussian kernel with a
+#             ``(2 * radius + 1) * (2 * radius + 1)`` shape.
+#     """
+#     x = torch.arange(
+#         -scale[1], scale[1] + 1, dtype=dtype, device=device).view(1, -1)
+#     y = torch.arange(
+#         -scale[0], scale[0] + 1, dtype=dtype, device=device).view(-1, 1)
+
+#     h = (-(x * x) / (2 * sigma[1] * sigma[1]) - (y * y) / (2 * sigma[0] * sigma[0])).exp()
+
+#     h[h < torch.finfo(h.dtype).eps * h.max()] = 0
+#     return h
+
+
+# def gen_gaussian_target(heatmap, center, scale, k=1):
+#     """Generate 2D gaussian heatmap.
+
+#     Args:
+#         heatmap (Tensor): Input heatmap, the gaussian kernel will cover on
+#             it and maintain the max value.
+#         center (list[int]): Coord of gaussian kernel's center.
+#         radius (int): Radius of gaussian kernel.
+#         k (int): Coefficient of gaussian kernel. Default: 1.
+
+#     Returns:
+#         out_heatmap (Tensor): Updated heatmap covered by gaussian kernel.
+#     """
+#     diameter_h = 2 * scale[0] + 1
+#     diameter_w = 2 * scale[1] + 1
+#     gaussian_kernel = gaussian2D(
+#         scale, sigma=[diameter_h / 6, diameter_w / 6], dtype=heatmap.dtype, device=heatmap.device)
+
+#     x, y = center
+
+#     height, width = heatmap.shape[:2]
+
+#     left, right = min(x, scale[1]), min(width - x, scale[1] + 1)
+#     top, bottom = min(y, scale[0]), min(height - y, scale[0] + 1)
+
+#     masked_heatmap = heatmap[y - top:y + bottom, x - left:x + right]
+#     masked_gaussian = gaussian_kernel[scale[0] - top:scale[0] + bottom,
+#                                       scale[1] - left:scale[1] + right]
+#     out_heatmap = heatmap
+#     torch.max(
+#         masked_heatmap,
+#         masked_gaussian * k,
+#         out=out_heatmap[y - top:y + bottom, x - left:x + right])
+
+#     return out_heatmap
 
 def gaussian_radius(det_size, min_overlap):
     r"""Generate 2D gaussian radius.

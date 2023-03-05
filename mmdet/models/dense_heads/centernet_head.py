@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from math import ceil
 from mmcv.cnn import bias_init_with_prob, normal_init
 from mmcv.ops import batched_nms
 from mmcv.runner import force_fp32
@@ -108,6 +109,9 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
             offset_pred (Tensor): offset predicts, the channels number is 2.
         """
         center_heatmap_pred = self.heatmap_head(feat).sigmoid()
+        # import pdb; pdb.set_trace()
+        # heatmapmin = center_heatmap_pred.min(axis=2, keepdim=True).values.min(axis=3, keepdim=True).values
+        # center_heatmap_pred = center_heatmap_pred - heatmapmin
         wh_pred = self.wh_head(feat)
         offset_pred = self.offset_head(feat)
         return center_heatmap_pred, wh_pred, offset_pred
@@ -226,11 +230,18 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
                 scale_box_h = (gt_bbox[j][3] - gt_bbox[j][1]) * height_ratio
                 scale_box_w = (gt_bbox[j][2] - gt_bbox[j][0]) * width_ratio
                 radius = gaussian_radius([scale_box_h, scale_box_w],
-                                         min_overlap=0.3)
-                radius = max(0, int(radius))
+                                         min_overlap=0) # 0.3 -> 0
+                radius = max(3, int(radius)) # 0 -> 1, 2, or 3
                 ind = gt_label[j]
                 gen_gaussian_target(center_heatmap_target[batch_id, ind],
                                     [ctx_int, cty_int], radius)
+
+                # scale_box_h = max(3, ceil(scale_box_h))
+                # scale_box_w = max(3, ceil(scale_box_w))
+
+                # ind = gt_label[j]
+                # gen_gaussian_target(center_heatmap_target[batch_id, ind],
+                #                     [ctx_int, cty_int], [scale_box_h, scale_box_w])
 
                 wh_target[batch_id, 0, cty_int, ctx_int] = scale_box_w
                 wh_target[batch_id, 1, cty_int, ctx_int] = scale_box_h
@@ -279,6 +290,7 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
                 each element represents the class label of the corresponding
                 box.
         """
+        # import pdb; pdb.set_trace()
         assert len(center_heatmap_preds) == len(wh_preds) == len(
             offset_preds) == 1
         scale_factors = [img_meta['scale_factor'] for img_meta in img_metas]

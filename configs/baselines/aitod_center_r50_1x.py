@@ -10,22 +10,66 @@ model = dict(
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
         style='pytorch',
         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[64, 256, 512, 1024, 2048],
         out_channels=256,
         num_outs=5),
+
+    # backbone=dict(
+    #     type='HourglassNet',
+    #     num_stacks=1,
+    # ),
+    # neck=dict(
+    #     type='ChannelMapper',
+    #     in_channels=[256], 
+    #     out_channels=256,
+    # ),
+
+    # backbone=dict(
+    #     type='HRNet',
+    #     extra=dict(
+    #         stage1=dict(
+    #             num_modules=1,
+    #             num_branches=1,
+    #             block='BOTTLENECK',
+    #             num_blocks=(4, ),
+    #             num_channels=(64, )),
+    #         stage2=dict(
+    #             num_modules=1,
+    #             num_branches=2,
+    #             block='BASIC',
+    #             num_blocks=(4, 4),
+    #             num_channels=(32, 64)),
+    #         stage3=dict(
+    #             num_modules=4,
+    #             num_branches=3,
+    #             block='BASIC',
+    #             num_blocks=(4, 4, 4),
+    #             num_channels=(32, 64, 128)),
+    #         stage4=dict(
+    #             num_modules=3,
+    #             num_branches=4,
+    #             block='BASIC',
+    #             num_blocks=(4, 4, 4, 4),
+    #             num_channels=(32, 64, 128, 256))),
+    #     init_cfg=dict(
+    #         type='Pretrained', checkpoint='open-mmlab://msra/hrnetv2_w32')),
+    # neck=dict(
+    #     type='HRFPN',
+    #     in_channels=[32, 64, 128, 256],
+    #     out_channels=256),
+
     bbox_head=dict(
         type='CenterNetHead',
-        num_classes=8,
+        num_classes=1,
         in_channel=256,
         feat_channel=256,
-        loss_center_heatmap=dict(type='GaussianFocalLoss', loss_weight=1.0),
+        loss_center_heatmap=dict(type='GaussianFocalLoss', loss_weight=1.0, gamma=1.0),
         loss_wh=dict(type='L1Loss', loss_weight=0.1),
         loss_offset=dict(type='L1Loss', loss_weight=1.0)),
     # training and testing settings
@@ -40,13 +84,9 @@ model = dict(
         pos_weight=-1,
         debug=False),
     test_cfg=dict(
-        nms_pre=3000,
-        min_bbox_size=0,
-        score_thr=0.05,
-        nms=dict(type='nms', iou_threshold=0.5),
         max_per_img=500,
         topk=500,
-        local_maximum_kernel=3,))
+        local_maximum_kernel=1,))
 
 dataset_type = 'AITODDataset'
 data_root = '/DATA/DATANAS1/hrz/dataset/AI-TOD/'
@@ -103,35 +143,35 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=16,
+    samples_per_gpu=8,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/ori/aitod_train.json',
+        ann_file=data_root + 'annotations/one/aitod_train.json',
         img_prefix=data_root + 'images/train/',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/ori/aitod_val.json',
+        ann_file=data_root + 'annotations/one/aitod_val.json',
         img_prefix=data_root + 'images/val/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/ori/aitod_val.0.json',
+        ann_file=data_root + 'annotations/one/aitod_val.json',
         img_prefix=data_root + 'images/val/',
         pipeline=test_pipeline))
 
 # optimizer
 optimizer = dict(
-    lr=0.01/2, paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.))
+    lr=0.001/2, paramwise_cfg=dict(bias_lr_mult=2., bias_decay_mult=0.))
 optimizer_config = dict(
     _delete_=True, grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
     policy='step',
-    warmup='constant',
-    warmup_iters=10000,
-    warmup_ratio=1.0 / 3,
-    step=[8, 11])
-runner = dict(type='EpochBasedRunner', max_epochs=12)
+    warmup='linear',
+    warmup_iters=1000,
+    warmup_ratio=1.0 / 1000,
+    step=[18, 24])
+runner = dict(type='EpochBasedRunner', max_epochs=28)
 evaluation = dict(interval=3, metric='bbox')

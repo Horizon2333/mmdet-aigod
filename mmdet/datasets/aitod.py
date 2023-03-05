@@ -17,9 +17,9 @@ from .custom import CustomDataset
 @DATASETS.register_module()
 class AITODDataset(CocoDataset):
 
-    CLASSES = ('airplane', 'bridge', 'storage-tank', 'ship', 'swimming-pool', 'vehicle', 'person', 'wind-mill')
+    # CLASSES = ('airplane', 'bridge', 'storage-tank', 'ship', 'swimming-pool', 'vehicle', 'person', 'wind-mill')
     # CLASSES = ('airplane', 'ship', 'vehicle', 'person')
-    # CLASSES = ('target', )
+    CLASSES = ('target', )
 
     def evaluate(self,
                  results,
