@@ -230,8 +230,8 @@ class CenterNetHead(BaseDenseHead, BBoxTestMixin):
                 scale_box_h = (gt_bbox[j][3] - gt_bbox[j][1]) * height_ratio
                 scale_box_w = (gt_bbox[j][2] - gt_bbox[j][0]) * width_ratio
                 radius = gaussian_radius([scale_box_h, scale_box_w],
-                                         min_overlap=0) # 0.3 -> 0
-                radius = max(3, int(radius)) # 0 -> 1, 2, or 3
+                                         min_overlap=0.3) # 0.3 -> 0
+                radius = max(0, int(radius)) # 0 -> 1, 2, or 3
                 ind = gt_label[j]
                 gen_gaussian_target(center_heatmap_target[batch_id, ind],
                                     [ctx_int, cty_int], radius)
